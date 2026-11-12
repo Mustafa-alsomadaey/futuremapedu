@@ -8,12 +8,24 @@ const store = {
   set(k, v) { try { localStorage.setItem('rp:' + k, JSON.stringify(v)); } catch { /* التخزين غير متاح */ } }
 };
 const CATS = {
+  promotion: 'الترقية العلمية',
   journals: 'المجلات والنشر',
   papers: 'فحص البحوث والمراجع',
-  researcher: 'الباحث والترقية',
+  researcher: 'الباحث ومؤشراته',
   grad: 'الدراسات العليا والإحصاء',
-  writing: 'أدوات الكتابة'
+  writing: 'أدوات الكتابة',
+  conf: 'المؤتمرات والروابط'
 };
+const ICONS = {
+  promotion: '<path d="M4 20h16M7 16V9m5 7V4m5 12v-5"/>',
+  journals: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11M9 8h6"/>',
+  papers: '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5M8.5 11l2 2 3.5-4"/>',
+  researcher: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/>',
+  grad: '<path d="m2 9 10-5 10 5-10 5zM6 11.5V16c3.5 3 8.5 3 12 0v-4.5M22 9v6"/>',
+  writing: '<path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/>',
+  conf: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4m8-4v4"/>'
+};
+const icon = c => `<span class="ic ic-${c}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[c]}</svg></span>`;
 const TOOLS = [];
 function tool(def) { TOOLS.push(def); }
 
@@ -69,39 +81,51 @@ const App = {
     const on = store.get('favs', []).includes(t.id);
     return `<a class="card" href="#/tool/${t.id}">
       <button class="fav ${on ? 'on' : ''}" data-fav="${t.id}" aria-label="إضافة إلى المفضلة">${on ? '★' : '☆'}</button>
-      <h3>${esc(t.title)}</h3><p>${esc(t.desc)}</p>
+      ${icon(t.cat)}<h3>${esc(t.title)}</h3><p>${esc(t.desc)}</p>
       <span class="tag ${t.net ? 'net' : ''}">${t.net ? 'بيانات حيّة' : 'يعمل دون إنترنت'}</span></a>`;
   },
   home(el) {
+    const feat = ['promo-2025', 'journal-check', 'paper-report', 'ref-check', 'cite'].map(id => TOOLS.find(t => t.id === id)).filter(Boolean);
     el.innerHTML = `
     <section class="hero">
-      <div class="eyebrow">منصة أكاديمية مجانية للتدريسيين والباحثين وطلبة الدراسات العليا</div>
-      <h1>كل ما يحتاجه الباحث قبل النشر وبعده، في مكان واحد</h1>
-      <p class="lead">افحص المجلة قبل الإرسال، تحقق من أن مراجعك غير مسحوبة، ولّد التوثيق بسبع صيغ، واحسب حجم العينة والثبات — ${TOOLS.length} خدمة تعمل مباشرة في متصفحك.</p>
-      <form class="hero-form" id="quick">
-        <input type="search" id="q" aria-label="بحث سريع" placeholder="اسم مجلة، ISSN، أو DOI لورقة بحثية…" required>
-        <button class="btn alt">افحص الآن</button>
+      <span class="eyebrow">منصة أكاديمية مجانية · ${TOOLS.length} خدمة</span>
+      <h1>رفيق الباحث من <em>فكرة البحث</em> إلى <em>الترقية العلمية</em></h1>
+      <p class="lead">احسب نقاط ترقيتك وفق التعليمات النافذة، افحص المجلة والمراجع قبل النشر، ولّد التوثيق، وحلّل بياناتك — كل ذلك في متصفحك وبلا تسجيل.</p>
+      <form class="cmd" id="quick" role="search">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" id="q" autocomplete="off" aria-label="بحث" placeholder="اكتب اسم خدمة، أو الصق DOI، أو ISSN، أو اسم مجلة…">
+        <button class="btn alt">ابدأ</button>
+        <div class="sugg" id="sugg" hidden></div>
       </form>
-      <div class="chips"><span class="chip">مجاني بالكامل</span><span class="chip">بدون تسجيل</span><span class="chip">نصوصك لا تغادر جهازك</span><span class="chip">تقارير جاهزة للطباعة</span></div>
+      <div class="chips"><a class="chip" href="#/tool/promo-2025">احسب نقاط الترقية</a><a class="chip" href="#/tool/journal-check">افحص مجلة</a><a class="chip" href="#/tool/ref-check">افحص مراجعك</a><a class="chip" href="#/tool/journal-match">اقترح مجلة لبحثي</a><a class="chip" href="#/tool/sample">حجم العينة</a></div>
     </section>
     <div class="stats">
       <div class="stat"><b>${TOOLS.length}</b><span>خدمة وأداة</span></div>
       <div class="stat"><b>${Object.keys(CATS).length}</b><span>أقسام متخصصة</span></div>
       <div class="stat"><b>${TOOLS.filter(t => !t.net).length}</b><span>أداة تعمل دون إنترنت</span></div>
-      <div class="stat"><b>5</b><span>مصادر بيانات مفتوحة</span></div>
+      <div class="stat"><b>0</b><span>تسجيل أو رسوم</span></div>
     </div>
+    <div class="sec-head"><h2>الأكثر استخداماً</h2></div>
+    <div class="bento">${feat.map((t, i) => `<a class="feat f${i}" href="#/tool/${t.id}">${icon(t.cat)}<h3>${esc(t.title)}</h3><p>${esc(t.desc)}</p><span class="go">افتح الخدمة ←</span></a>`).join('')}</div>
+    <nav class="catnav" aria-label="الأقسام">${Object.entries(CATS).map(([k, n]) => `<a href="#/tools?c=${k}">${icon(k)}<span>${n}</span><small>${TOOLS.filter(t => t.cat === k).length}</small></a>`).join('')}</nav>
     ${Object.entries(CATS).map(([k, name]) => {
       const list = TOOLS.filter(t => t.cat === k);
-      return `<div class="sec-head"><h2>${name}</h2><span class="count">${list.length} خدمات</span></div><div class="grid">${list.map(App.card).join('')}</div>`;
+      return `<div class="sec-head" id="c-${k}"><h2>${name}</h2><span class="count">${list.length} خدمات</span></div><div class="grid">${list.map(App.card).join('')}</div>`;
     }).join('')}`;
+    const q = $('#q'), sg = $('#sugg');
+    q.oninput = () => {
+      const v = q.value.trim(), hits = v.length < 2 || cleanDOI(v) ? [] : TOOLS.filter(t => (t.title + ' ' + t.desc).includes(v)).slice(0, 6);
+      sg.hidden = !hits.length; sg.innerHTML = hits.map(t => `<a href="#/tool/${t.id}">${icon(t.cat)}<span>${esc(t.title)}</span></a>`).join('');
+    };
     $('#quick').onsubmit = e => {
       e.preventDefault();
-      const q = $('#q').value.trim();
-      location.hash = (cleanDOI(q) ? '#/tool/doi-check?q=' : '#/tool/journal-check?q=') + encodeURIComponent(q);
+      const v = q.value.trim(); if (!v) return;
+      const hit = sg.querySelector('a');
+      location.hash = cleanDOI(v) ? '#/tool/paper-report?q=' + encodeURIComponent(v) : (!cleanISSN(v) && hit) ? hit.getAttribute('href') : '#/tool/journal-check?q=' + encodeURIComponent(v);
     };
   },
   tools(el, p, onlyFav) {
-    let cat = '', q = '';
+    let cat = CATS[p.c] ? p.c : '', q = '';
     const favs = store.get('favs', []);
     const draw = () => {
       const list = TOOLS.filter(t => (!onlyFav || favs.includes(t.id)) && (!cat || t.cat === cat) && (!q || (t.title + t.desc).includes(q)));
@@ -110,7 +134,7 @@ const App = {
     };
     el.innerHTML = `<h1>${onlyFav ? 'خدماتي المفضلة' : 'كل خدمات المنصة'}</h1>
       <div class="field"><input type="search" id="f" placeholder="ابحث في الخدمات…" aria-label="ابحث في الخدمات"></div>
-      <div class="filters"><button class="pill on" data-c="">الكل</button>${Object.entries(CATS).map(([k, n]) => `<button class="pill" data-c="${k}">${n}</button>`).join('')}</div>
+      <div class="filters"><button class="pill ${cat ? '' : 'on'}" data-c="">الكل</button>${Object.entries(CATS).map(([k, n]) => `<button class="pill ${cat === k ? 'on' : ''}" data-c="${k}">${n}</button>`).join('')}</div>
       <div class="grid" id="list"></div>`;
     $('#f').oninput = e => { q = e.target.value.trim(); draw(); };
     $$('.pill', el).forEach(b => b.onclick = () => { cat = b.dataset.c; $$('.pill', el).forEach(x => x.classList.toggle('on', x === b)); draw(); });
@@ -127,6 +151,9 @@ const App = {
         <dt>DOAJ</dt><dd>دليل مجلات الوصول الحر المحكّمة ورسوم النشر فيها.</dd>
         <dt>ORCID</dt><dd>الملفات التعريفية العلنية للباحثين.</dd>
         <dt>Open Library</dt><dd>بيانات الكتب بحسب رقم ISBN.</dd>
+        <dt>DataCite</dt><dd>الرسائل والأطاريح الجامعية المودعة رقمياً.</dd>
+        <dt>قائمة Beall</dt><dd>قائمة تحذيرية غير رسمية بالناشرين المحتمل أنهم مفترسون (beallslist.net).</dd>
+        <dt>تعليمات الترقيات</dt><dd>النص الرسمي لتعليمات رقم (10) لسنة 2025 ورقم (167) لسنة 2017 الصادرة عن وزارة التعليم العالي والبحث العلمي العراقية.</dd>
       </dl></div>
     <div class="panel"><h2>حدود يجب معرفتها</h2>
       <p>فهرسة Scopus وClarivate وأرباع المجلات (Q1–Q4) بيانات مملوكة لا تتيحها المصادر المفتوحة، لذلك تعرض المنصة ما يمكن التحقق منه علناً وتضع لك روابط مباشرة إلى المواقع الرسمية للتأكد النهائي. أعداد الاستشهادات مأخوذة من Crossref وقد تقلّ عن أرقام Scopus أو Google Scholar.</p>
