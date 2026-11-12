@@ -41,12 +41,13 @@ tool({
       const [cr, dj] = await Promise.allSettled([getJSON(`${CR}/journals/${issn}`), getJSON(DOAJ + encodeURIComponent('issn:' + issn))]);
       const j = cr.status === 'fulfilled' ? cr.value.message : null;
       const d = dj.status === 'fulfilled' ? dj.value.results?.[0]?.bibjson : null;
+      const bm = await beallMatch(j?.publisher || d?.publisher?.name, d?.ref?.journal);
       if (!j && !d) { out.innerHTML = `<div class="verdict warn">لم نجد مجلة بهذا الرقم (${esc(issn)}) في Crossref ولا DOAJ. غياب المجلة عن المصدرين معاً يستدعي الحذر، لكنه ليس دليلاً قاطعاً — تحقق من الروابط الرسمية أدناه.</div>${links(issn)}`; return; }
       const years = (j?.breakdowns?.['dois-by-issued-year'] || []).slice().sort((a, b) => a[0] - b[0]).filter(y => y[0] >= new Date().getFullYear() - 14);
       const max = Math.max(1, ...years.map(y => y[1]));
       const apc = d?.apc?.has_apc ? (d.apc.max || []).map(a => fmt(a.price) + ' ' + a.currency).join(' / ') : (d ? 'لا توجد رسوم نشر' : '—');
       const issns = [...new Set([...(j?.ISSN || []), d?.pissn, d?.eissn].filter(Boolean))];
-      out.innerHTML = `<div class="panel"><h2 class="ltr">${esc(j?.title || d?.title)}</h2>
+      out.innerHTML = `${beallNote(bm)}<div class="panel"><h2 class="ltr">${esc(j?.title || d?.title)}</h2>
         <div class="btns" style="margin-bottom:12px">
           ${j ? '<span class="badge ok">مسجّلة في Crossref (تمنح DOI)</span>' : '<span class="badge warn">غير موجودة في Crossref</span>'}
           ${d ? '<span class="badge ok">مدرجة في DOAJ</span>' : '<span class="badge mute">غير مدرجة في DOAJ</span>'}
